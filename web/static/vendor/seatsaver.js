@@ -10994,8 +10994,6 @@ Elm.SeatSaver.make = function (_elm) {
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $Html$Events = Elm.Html.Events.make(_elm),
-   $Http = Elm.Http.make(_elm),
-   $Json$Decode = Elm.Json.Decode.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
@@ -11003,6 +11001,17 @@ Elm.SeatSaver.make = function (_elm) {
    $StartApp = Elm.StartApp.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
+   var seatLists = Elm.Native.Port.make(_elm).inboundSignal("seatLists",
+   "SeatSaver.Model",
+   function (v) {
+      return typeof v === "object" && v instanceof Array ? Elm.Native.List.make(_elm).fromArray(v.map(function (v) {
+         return typeof v === "object" && "seatNo" in v && "occupied" in v ? {_: {}
+                                                                            ,seatNo: typeof v.seatNo === "number" && isFinite(v.seatNo) && Math.floor(v.seatNo) === v.seatNo ? v.seatNo : _U.badPort("an integer",
+                                                                            v.seatNo)
+                                                                            ,occupied: typeof v.occupied === "boolean" ? v.occupied : _U.badPort("a boolean (true or false)",
+                                                                            v.occupied)} : _U.badPort("an object with fields `seatNo`, `occupied`",v);
+      })) : _U.badPort("an array",v);
+   });
    var update = F2(function (action,model) {
       var _p0 = action;
       if (_p0.ctor === "Toggle") {
@@ -11011,11 +11020,11 @@ Elm.SeatSaver.make = function (_elm) {
             };
             return {ctor: "_Tuple2",_0: A2($List.map,updateSeat,model),_1: $Effects.none};
          } else {
-            var newModel = A2($Maybe.withDefault,model,_p0._0);
-            return {ctor: "_Tuple2",_0: newModel,_1: $Effects.none};
+            return {ctor: "_Tuple2",_0: _p0._0,_1: $Effects.none};
          }
    });
    var SetSeats = function (a) {    return {ctor: "SetSeats",_0: a};};
+   var incomingActions = A2($Signal.map,SetSeats,seatLists);
    var Toggle = function (a) {    return {ctor: "Toggle",_0: a};};
    var seatItem = F2(function (address,seat) {
       var occupiedClass = seat.occupied ? "occupied" : "available";
@@ -11024,17 +11033,9 @@ Elm.SeatSaver.make = function (_elm) {
       _U.list([$Html.text($Basics.toString(seat.seatNo))]));
    });
    var view = F2(function (address,model) {    return A2($Html.ul,_U.list([$Html$Attributes.$class("seats")]),A2($List.map,seatItem(address),model));});
+   var init = {ctor: "_Tuple2",_0: _U.list([]),_1: $Effects.none};
    var Seat = F2(function (a,b) {    return {seatNo: a,occupied: b};});
-   var decodeSeats = function () {
-      var seat = A3($Json$Decode.object2,
-      F2(function (seatNo,occupied) {    return A2(Seat,seatNo,occupied);}),
-      A2($Json$Decode._op[":="],"seatNo",$Json$Decode.$int),
-      A2($Json$Decode._op[":="],"occupied",$Json$Decode.bool));
-      return A2($Json$Decode.at,_U.list(["data"]),$Json$Decode.list(seat));
-   }();
-   var fetchSeats = $Effects.task(A2($Task.map,SetSeats,$Task.toMaybe(A2($Http.get,decodeSeats,"http://localhost:4000/api/seats"))));
-   var init = {ctor: "_Tuple2",_0: _U.list([]),_1: fetchSeats};
-   var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([])});
+   var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([incomingActions])});
    var main = app.html;
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
    return _elm.SeatSaver.values = {_op: _op
@@ -11047,6 +11048,5 @@ Elm.SeatSaver.make = function (_elm) {
                                   ,update: update
                                   ,view: view
                                   ,seatItem: seatItem
-                                  ,fetchSeats: fetchSeats
-                                  ,decodeSeats: decodeSeats};
+                                  ,incomingActions: incomingActions};
 };

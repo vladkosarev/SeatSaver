@@ -15,7 +15,7 @@ app =
     { init = init
     , update = update
     , view = view
-    , inputs = []
+    , inputs = [incomingActions]
     }
 
 main : Signal Html
@@ -38,11 +38,11 @@ type alias Model =
 
 init : (Model, Effects Action)
 init =
-  ([], fetchSeats)
+  ([], Effects.none)
   
 -- UPDATE
 
-type Action = Toggle Seat | SetSeats (Maybe Model)
+type Action = Toggle Seat | SetSeats Model
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
@@ -56,11 +56,7 @@ update action model =
       in
         (List.map updateSeat model, Effects.none)
     SetSeats seats ->
-      let
-        newModel = Maybe.withDefault model seats
-      in
-        (newModel, Effects.none)
-            
+      (seats, Effects.none)    
 -- VIEW
 
 view : Signal.Address Action -> Model -> Html
@@ -79,22 +75,10 @@ seatItem address seat =
       ]
       [ text (toString seat.seatNo) ]
       
--- EFFECTS
+-- SIGNALS
 
-fetchSeats: Effects Action
-fetchSeats =
-  Http.get decodeSeats "http://localhost:4000/api/seats"
-    |> Task.toMaybe
-    |> Task.map SetSeats
-    |> Effects.task
+port seatLists : Signal Model    
 
-
-decodeSeats: Json.Decoder Model
-decodeSeats =
-  let
-    seat =
-      Json.object2 (\seatNo occupied -> (Seat seatNo occupied))
-        ("seatNo" := Json.int)
-        ("occupied" := Json.bool)
-  in
-    Json.at ["data"] (Json.list seat)      
+incomingActions: Signal Action
+incomingActions =
+  Signal.map SetSeats seatLists
