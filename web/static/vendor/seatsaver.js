@@ -10998,8 +10998,7 @@ Elm.SeatSaver.make = function (_elm) {
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
-   $StartApp = Elm.StartApp.make(_elm),
-   $Task = Elm.Task.make(_elm);
+   $StartApp = Elm.StartApp.make(_elm);
    var _op = {};
    var seatLists = Elm.Native.Port.make(_elm).inboundSignal("seatLists",
    "SeatSaver.Model",
@@ -11037,7 +11036,6 @@ Elm.SeatSaver.make = function (_elm) {
    var Seat = F2(function (a,b) {    return {seatNo: a,occupied: b};});
    var app = $StartApp.start({init: init,update: update,view: view,inputs: _U.list([incomingActions])});
    var main = app.html;
-   var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
    return _elm.SeatSaver.values = {_op: _op
                                   ,app: app
                                   ,main: main
